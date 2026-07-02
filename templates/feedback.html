@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>InterviewAI — Feedback</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:#0f0f13; color:#e2e8f0; min-height:100vh; padding:40px 20px; }
+  .container { max-width:800px; margin:0 auto; }
+  h1 { font-size:28px; font-weight:600; margin-bottom:8px; }
+  .sub { color:#94a3b8; margin-bottom:32px; }
+  .card { background:#1a1a2e; border:1px solid #2d2d44; border-radius:16px; padding:24px; margin-bottom:20px; }
+  .score-big { font-size:64px; font-weight:700; color:#6366f1; }
+  .label { font-size:12px; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+  .recommendation { display:inline-block; padding:6px 16px; border-radius:999px; font-weight:600; margin-top:12px; }
+  .rec-hire { background:#22c55e22; color:#22c55e; border:1px solid #22c55e44; }
+  .rec-maybe { background:#f59e0b22; color:#f59e0b; border:1px solid #f59e0b44; }
+  .rec-no { background:#ef444422; color:#ef4444; border:1px solid #ef444444; }
+  ul { list-style:none; }
+  ul li { padding:8px 0; border-bottom:1px solid #2d2d44; font-size:14px; color:#cbd5e1; }
+  ul li:last-child { border:none; }
+  ul li::before { content:'→ '; color:#6366f1; }
+  .q-row { display:flex; justify-content:space-between; align-items:flex-start; padding:10px 0; border-bottom:1px solid #2d2d44; gap:16px; }
+  .q-row:last-child { border:none; }
+  .q-text { font-size:13px; color:#cbd5e1; flex:1; }
+  .q-score { font-size:20px; font-weight:700; color:#6366f1; min-width:32px; text-align:right; }
+  .q-comment { font-size:12px; color:#64748b; margin-top:4px; }
+  .btn { display:inline-block; padding:12px 28px; background:#6366f1; color:#fff; border-radius:10px; text-decoration:none; font-weight:600; margin-top:24px; cursor:pointer; border:none; font-size:15px; }
+  .loading { text-align:center; padding:60px; color:#64748b; }
+  h2 { font-size:18px; font-weight:600; margin-bottom:16px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="loading" class="loading">
+    <div style="font-size:40px;margin-bottom:16px">⏳</div>
+    Generating your feedback report…
+  </div>
+  <div id="content" style="display:none">
+    <h1>Interview Feedback</h1>
+    <p class="sub">Here's how you did</p>
+
+    <div class="card" style="display:flex;gap:40px;align-items:center">
+      <div>
+        <div class="label">Overall Score</div>
+        <div class="score-big" id="overall-score">-</div>
+        <div style="color:#94a3b8;font-size:14px">/10</div>
+      </div>
+      <div style="flex:1">
+        <div class="label">Recommendation</div>
+        <div id="recommendation"></div>
+        <p style="margin-top:16px;font-size:14px;color:#cbd5e1;line-height:1.6" id="summary"></p>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="card">
+        <h2>✅ Strengths</h2>
+        <ul id="strengths"></ul>
+      </div>
+      <div class="card">
+        <h2>📈 Areas to Improve</h2>
+        <ul id="improvements"></ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Question-by-Question</h2>
+      <div id="q-scores"></div>
+    </div>
+
+    <a href="/" class="btn">Start New Interview</a>
+  </div>
+</div>
+
+<script>
+async function loadFeedback() {
+  try {
+    const res = await fetch('/api/get-feedback');
+    const data = await res.json();
+
+    document.getElementById('overall-score').textContent = data.overall_score;
+    document.getElementById('summary').textContent = data.summary;
+
+    const recEl = document.getElementById('recommendation');
+    const recClass = data.recommendation === 'Hire' ? 'rec-hire' : data.recommendation === 'Maybe' ? 'rec-maybe' : 'rec-no';
+    recEl.innerHTML = `<span class="recommendation ${recClass}">${data.recommendation}</span>`;
+
+    const strEl = document.getElementById('strengths');
+    data.strengths.forEach(s => { const li = document.createElement('li'); li.textContent = s; strEl.appendChild(li); });
+
+    const impEl = document.getElementById('improvements');
+    data.improvements.forEach(s => { const li = document.createElement('li'); li.textContent = s; impEl.appendChild(li); });
+
+    const qEl = document.getElementById('q-scores');
+    (data.question_scores || []).forEach(q => {
+      qEl.innerHTML += `<div class="q-row">
+        <div class="q-text">${q.question}<div class="q-comment">${q.comment}</div></div>
+        <div class="q-score">${q.score}</div>
+      </div>`;
+    });
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+  } catch(e) {
+    document.getElementById('loading').innerHTML = '❌ Could not load feedback. Please try again.';
+  }
+}
+
+loadFeedback();
+</script>
+</body>
+</html>

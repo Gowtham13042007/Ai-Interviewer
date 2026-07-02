@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>InterviewAI — Setup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/style1.css">
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24"><path d="M12 3L3 8v8l9 5 9-5V8L12 3z"/><path d="M12 3v13M3 8l9 5 9-5"/></svg>
+    </div>
+    <span class="logo-name">InterviewAI</span>
+  </a>
+  <div class="header-right">
+    <span class="header-step-label">Step 1 of 2 — Setup</span>
+    <button class="header-save-btn">Save as template</button>
+  </div>
+</header>
+<div class="progress-track"><div class="progress-fill"></div></div>
+
+<main>
+
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>Configure your interview</h1>
+      <p>Define the role, required skills, and how you'd like the session conducted.</p>
+    </div>
+    <div class="steps">
+      <div class="step-item active">
+        <div class="step-num">1</div>
+        <span>Setup</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <span>Interview</span>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Job Details -->
+  <p class="section-eyebrow">01 — Role information</p>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon-wrap">
+        <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+      </div>
+      <div class="card-title-block">
+        <div class="title">Job details</div>
+        <div class="sub">Tell us about the role you're interviewing for</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="field">
+          <label for="job-title">Job title</label>
+          <input type="text" id="job-title" placeholder="e.g. Senior Frontend Engineer"/>
+        </div>
+        <div class="field">
+          <label for="job-type">Employment type</label>
+          <select id="job-type">
+            <option value="">Select type…</option>
+            <option>Full-time</option>
+            <option>Part-time</option>
+            <option>Contract</option>
+            <option>Internship</option>
+            <option>Freelance</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="industry">Industry</label>
+          <select id="industry">
+            <option value="">Select industry…</option>
+            <option>Technology</option>
+            <option>Finance</option>
+            <option>Healthcare</option>
+            <option>Education</option>
+            <option>E-commerce</option>
+            <option>Media &amp; Entertainment</option>
+            <option>Consulting</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="experience">Experience level</label>
+          <select id="experience">
+            <option value="">Select level…</option>
+            <option>Entry level (0–2 yrs)</option>
+            <option>Mid level (2–5 yrs)</option>
+            <option>Senior (5–8 yrs)</option>
+            <option>Lead / Principal (8+ yrs)</option>
+          </select>
+        </div>
+        <div class="field col-span-2">
+          <label for="jd">Job description <span class="hint">(recommended)</span></label>
+          <textarea id="jd" placeholder="Paste the job description here — the AI will tailor questions to the role's specific requirements and responsibilities."></textarea>
+          <p class="field-desc">A detailed JD helps the AI ask more relevant, targeted questions.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skills & Focus -->
+  <p class="section-eyebrow">02 — Skills & focus</p>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </div>
+      <div class="card-title-block">
+        <div class="title">Required skills</div>
+        <div class="sub">Skills the interview should focus on</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <label>Key skills <span class="hint">Press Enter or comma to add</span></label>
+        <div class="skills-wrap" id="skills-wrap">
+          <input type="text" id="skill-input" placeholder="e.g. React, Node.js, SQL…"/>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="field">
+        <label>Interview focus</label>
+        <div class="pill-group" id="focus-pills">
+          <button class="pill selected" data-val="technical">Technical</button>
+          <button class="pill" data-val="behavioral">Behavioral</button>
+          <button class="pill" data-val="system-design">System design</button>
+          <button class="pill" data-val="situational">Situational</button>
+          <button class="pill" data-val="mixed">Mixed</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preferences -->
+  <p class="section-eyebrow">03 — Session preferences</p>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M8.46 8.46a5 5 0 0 0 0 7.07"/></svg>
+      </div>
+      <div class="card-title-block">
+        <div class="title">Session preferences</div>
+        <div class="sub">Customize how the interview is conducted</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="field">
+          <label for="language">Language</label>
+          <select id="language">
+            <option value="en">English</option>
+            <option value="hi">Hindi</option>
+            <option value="te">Telugu</option>
+            <option value="ta">Tamil</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="es">Spanish</option>
+            <option value="zh">Chinese (Mandarin)</option>
+            <option value="ja">Japanese</option>
+            <option value="ar">Arabic</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="tone">Interviewer tone</label>
+          <select id="tone">
+            <option>Professional</option>
+            <option>Friendly</option>
+            <option>Strict</option>
+            <option>Conversational</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="field">
+        <label>Difficulty</label>
+        <div class="pill-group" id="diff-pills">
+          <button class="pill" data-val="easy">Easy</button>
+          <button class="pill selected" data-val="medium">Medium</button>
+          <button class="pill" data-val="hard">Hard</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="field">
+        <label>Number of questions</label>
+        <div class="slider-row">
+          <input type="range" min="3" max="20" value="8" id="q-count" step="1"/>
+          <span class="slider-val" id="q-count-val">8 questions</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="tl">Add custom questions</div>
+          <div class="td">Include your own questions alongside AI-generated ones</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="custom-q-toggle"/>
+          <span class="t-slider"></span>
+        </label>
+      </div>
+
+      <div class="collapse" id="custom-q-area">
+        <div class="field">
+          <label for="custom-questions">Your questions <span class="hint">One per line</span></label>
+          <textarea id="custom-questions" style="min-height:115px" placeholder="Tell me about a challenging project you've worked on.&#10;How do you handle tight deadlines?&#10;Describe your experience with cloud platforms."></textarea>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="tl">Show answer hints</div>
+          <div class="td">Display brief guidance during the interview to help structure responses</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox"/>
+          <span class="t-slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-bar">
+    <span class="action-hint">All settings are saved automatically</span>
+    <div class="action-buttons">
+      <button class="btn btn-ghost">Save as template</button>
+      <a href="interview.html" class="btn btn-primary">
+        Begin interview <span class="arrow">→</span>
+      </a>
+    </div>
+  </div>
+
+</main>
+
+<script src="/static/script.js"></script>
+</body>
+</html>

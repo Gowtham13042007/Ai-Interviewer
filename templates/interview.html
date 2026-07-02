@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>InterviewAI — Session</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --font-body:'Inter',system-ui,sans-serif;
+  --font-display:'DM Serif Display',Georgia,serif;
+  --transition:0.18s cubic-bezier(0.4,0,0.2,1);
+  --meet-bg:#141412;
+  --meet-surface:#1E1D1A;
+  --meet-surface-2:#272522;
+  --meet-border:rgba(255,255,255,0.08);
+  --meet-border-2:rgba(255,255,255,0.14);
+  --meet-text:#F0EDE8;
+  --meet-text-2:#A8A49E;
+  --meet-text-3:#6E6A64;
+  --accent-gold:#C09355;
+  --accent-gold-pale:rgba(192,147,85,0.12);
+  --danger:#E25454;
+  --danger-dark:#B83C3C;
+  --radius:10px;--radius-sm:6px;--radius-lg:14px;
+}
+html,body{height:100%;font-size:15px;-webkit-font-smoothing:antialiased}
+body{font-family:var(--font-body);background:var(--meet-bg);color:var(--meet-text);
+  display:flex;flex-direction:column;overflow:hidden;height:100dvh}
+
+.header{height:58px;background:var(--meet-bg);border-bottom:1px solid var(--meet-border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;
+  flex-shrink:0;z-index:50}
+.header-left{display:flex;align-items:center;gap:16px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-mark{width:28px;height:28px;border:1.5px solid rgba(255,255,255,0.2);border-radius:6px;
+  display:flex;align-items:center;justify-content:center}
+.logo-mark svg{width:14px;height:14px;stroke:var(--accent-gold);fill:none;stroke-width:1.8;stroke-linecap:round}
+.logo-name{font-family:var(--font-display);font-size:17px;color:var(--meet-text);letter-spacing:.1px}
+.header-divider{width:1px;height:20px;background:var(--meet-border-2)}
+.session-meta{display:flex;flex-direction:column;gap:1px}
+.session-title{font-size:13px;font-weight:500;color:var(--meet-text);letter-spacing:-.1px}
+.session-sub{font-size:11px;color:var(--meet-text-2);letter-spacing:.02em}
+.header-center{display:flex;align-items:center;gap:10px}
+.timer-wrap{display:flex;align-items:center;gap:7px;background:var(--meet-surface);
+  border:1px solid var(--meet-border);border-radius:20px;padding:5px 13px}
+.timer-dot{width:7px;height:7px;border-radius:50%;background:var(--accent-gold);
+  animation:pulse-dot 2s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}
+.timer-text{font-size:13px;font-weight:600;color:var(--meet-text);font-variant-numeric:tabular-nums;letter-spacing:.05em}
+.q-badge{background:var(--meet-surface);border:1px solid var(--meet-border);border-radius:20px;
+  padding:5px 13px;font-size:12px;color:var(--meet-text-2);letter-spacing:.01em}
+.q-badge span{color:var(--accent-gold);font-weight:600}
+.header-right{display:flex;align-items:center;gap:10px}
+.btn-end{display:flex;align-items:center;gap:7px;background:var(--danger);color:#fff;border:none;
+  border-radius:6px;padding:8px 16px;font-size:13px;font-weight:500;font-family:var(--font-body);
+  cursor:pointer;transition:background var(--transition),transform var(--transition);letter-spacing:.01em}
+.btn-end:hover{background:var(--danger-dark)}.btn-end:active{transform:scale(.97)}
+.btn-end svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round}
+
+.meet-layout{flex:1;display:flex;overflow:hidden}
+.stage{flex:1;display:flex;align-items:center;justify-content:center;padding:14px;min-width:0}
+
+.tile{position:relative;border-radius:var(--radius-lg);overflow:hidden;background:var(--meet-surface-2);
+  border:1px solid var(--meet-border);width:min(520px,90%);aspect-ratio:16/10;display:flex;
+  align-items:center;justify-content:center}
+.tile.speaking{border-color:var(--accent-gold);box-shadow:0 0 0 2px rgba(192,147,85,.3)}
+.ai-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 60% 40%,rgba(192,147,85,.06) 0%,transparent 65%),
+  radial-gradient(ellipse at 30% 70%,rgba(192,147,85,.04) 0%,transparent 60%);animation:ai-breathe 5s ease-in-out infinite}
+@keyframes ai-breathe{0%,100%{opacity:.7}50%{opacity:1}}
+.ai-avatar{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:14px}
+.ai-orb-wrap{position:relative;width:80px;height:80px;display:flex;align-items:center;justify-content:center}
+.ai-ring{position:absolute;border-radius:50%;border:1.5px solid rgba(192,147,85,.25);
+  opacity:0;pointer-events:none;width:80px;height:80px}
+.tile.ai-speaking .ai-ring:nth-child(1){animation:ai-ring-expand 3s ease-out infinite;animation-delay:0s}
+.tile.ai-speaking .ai-ring:nth-child(2){animation:ai-ring-expand 3s ease-out infinite;animation-delay:1s}
+.tile.ai-speaking .ai-ring:nth-child(3){animation:ai-ring-expand 3s ease-out infinite;animation-delay:2s}
+@keyframes ai-ring-expand{0%{transform:scale(1);opacity:.6}100%{transform:scale(2.2);opacity:0}}
+.ai-orb{position:relative;z-index:2;width:72px;height:72px;border-radius:50%;
+  background:var(--meet-surface);border:2px solid rgba(192,147,85,.5);
+  display:flex;align-items:center;justify-content:center;transition:border-color .3s}
+.ai-orb.active{border-color:var(--accent-gold)}
+.ai-orb svg{width:32px;height:32px;stroke:var(--accent-gold);fill:none;stroke-width:1.5;stroke-linecap:round}
+.ai-name{font-size:15px;font-weight:500;color:var(--meet-text);letter-spacing:-.1px}
+.ai-status{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--meet-text-2)}
+.ai-status-dot{width:6px;height:6px;border-radius:50%;background:var(--accent-gold);animation:pulse-dot 2s ease-in-out infinite}
+
+.panel{width:360px;flex-shrink:0;background:var(--meet-surface);border-left:1px solid var(--meet-border);
+  display:flex;flex-direction:column;overflow:hidden}
+.panel-title{padding:14px;font-size:12.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--meet-text-2);border-bottom:1px solid var(--meet-border)}
+.panel-content{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;
+  scrollbar-width:thin;scrollbar-color:var(--meet-border) transparent}
+.panel-content::-webkit-scrollbar{width:4px}
+.panel-content::-webkit-scrollbar-thumb{background:var(--meet-border-2);border-radius:4px}
+
+.q-card{background:var(--meet-surface-2);border:1px solid var(--meet-border-2);
+  border-radius:var(--radius);padding:14px;margin-bottom:6px}
+.q-card-eyebrow{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--accent-gold);margin-bottom:6px}
+.q-card-text{font-size:13px;color:var(--meet-text);line-height:1.6}
+
+.msg{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:var(--radius);animation:msg-in .2s ease}
+@keyframes msg-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.msg-ai{background:rgba(192,147,85,.07);border:1px solid rgba(192,147,85,.13)}
+.msg-user{background:var(--meet-surface-2);border:1px solid var(--meet-border)}
+.msg-sender{font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:2px}
+.msg-ai .msg-sender{color:var(--accent-gold)}.msg-user .msg-sender{color:var(--meet-text-2)}
+.msg-text{font-size:13px;color:var(--meet-text);line-height:1.55}
+.msg-feedback{font-size:11.5px;color:var(--meet-text-2);border-top:1px solid var(--meet-border);
+  margin-top:6px;padding-top:6px;display:flex;align-items:center;gap:6px}
+.score-chip{background:var(--accent-gold-pale);border:1px solid rgba(192,147,85,.3);
+  border-radius:20px;padding:2px 8px;font-size:11px;color:var(--accent-gold);font-weight:600;flex-shrink:0}
+
+.typing-msg{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius);
+  background:rgba(192,147,85,.07);border:1px solid rgba(192,147,85,.13)}
+.typing-dots{display:flex;gap:4px;align-items:center}
+.typing-dots span{width:6px;height:6px;border-radius:50%;background:var(--accent-gold);
+  opacity:.4;animation:typing-bounce 1.2s ease-in-out infinite}
+.typing-dots span:nth-child(2){animation-delay:.18s}.typing-dots span:nth-child(3){animation-delay:.36s}
+@keyframes typing-bounce{0%,60%,100%{opacity:.35;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
+.typing-label{font-size:12px;color:var(--meet-text-2)}
+
+.footer-status{height:56px;background:var(--meet-bg);border-top:1px solid var(--meet-border);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12.5px;color:var(--meet-text-2)}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;
+  align-items:center;justify-content:center;z-index:200;
+  backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .2s ease}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--meet-surface);border:1px solid var(--meet-border-2);border-radius:var(--radius-lg);
+  padding:2rem;width:360px;max-width:90vw;transform:translateY(16px);transition:transform .2s ease}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal h2{font-family:var(--font-display);font-size:20px;font-weight:400;color:var(--meet-text);margin-bottom:8px}
+.modal p{font-size:13px;color:var(--meet-text-2);line-height:1.6;margin-bottom:1.5rem}
+.modal-actions{display:flex;gap:9px}
+.modal-btn{flex:1;padding:10px 0;border-radius:6px;font-size:13px;font-weight:500;
+  font-family:var(--font-body);cursor:pointer;border:none;transition:all var(--transition);letter-spacing:.01em}
+.modal-btn-cancel{background:var(--meet-surface-2);border:1px solid var(--meet-border-2);color:var(--meet-text)}
+.modal-btn-cancel:hover{background:rgba(255,255,255,.07)}
+.modal-btn-end{background:var(--danger);color:#fff}
+.modal-btn-end:hover{background:var(--danger-dark)}
+
+@media(max-width:800px){.panel{display:none}}
+@media(max-width:500px){.session-meta{display:none}.header-divider{display:none}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <a href="/" class="logo">
+      <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M12 3L3 8v8l9 5 9-5V8L12 3z"/><path d="M12 3v13M3 8l9 5 9-5"/></svg></div>
+      <span class="logo-name">InterviewAI</span>
+    </a>
+    <div class="header-divider"></div>
+    <div class="session-meta">
+      <div class="session-title" id="header-role">Loading…</div>
+      <div class="session-sub" id="header-sub"></div>
+    </div>
+  </div>
+  <div class="header-center">
+    <div class="timer-wrap">
+      <div class="timer-dot"></div>
+      <span class="timer-text" id="timer">00:00</span>
+    </div>
+    <div class="q-badge">Question <span id="q-current">—</span> of <span id="q-total">—</span></div>
+  </div>
+  <div class="header-right">
+    <button class="btn-end" id="end-btn">
+      <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      End interview
+    </button>
+  </div>
+</header>
+
+<div class="meet-layout">
+  <div class="stage">
+    <div class="tile" id="ai-tile">
+      <div class="ai-bg"></div>
+      <div class="ai-avatar">
+        <div class="ai-orb-wrap">
+          <div class="ai-ring"></div><div class="ai-ring"></div><div class="ai-ring"></div>
+          <div class="ai-orb" id="ai-orb">
+            <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          </div>
+        </div>
+        <div class="ai-name">AI Interviewer</div>
+        <div class="ai-status">
+          <div class="ai-status-dot"></div>
+          <span id="ai-status-text">Starting…</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Transcript</div>
+    <div class="panel-content" id="transcript-panel">
+      <div class="q-card">
+        <div class="q-card-eyebrow">Current question</div>
+        <div class="q-card-text" id="current-q-text">Starting interview…</div>
+      </div>
+      <div class="typing-msg" id="typing-indicator" style="display:none">
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+        <span class="typing-label" id="typing-label">AI is thinking…</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer-status">
+  All speaking &amp; listening happens through the server's mic/speakers — this page just shows what's happening.
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>End this interview?</h2>
+    <p>You'll receive a detailed feedback report covering your answers, communication, and areas to improve.</p>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Keep going</button>
+      <button class="modal-btn modal-btn-end" onclick="endInterview()">End &amp; get feedback</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// All voice logic (speaking + listening) runs server-side in Flask.
+// This page's only job is to start the interview and poll for status.
+const CONFIG = {{ config | tojson }};
+const JOB_ID = {{ job_id | tojson }};
+
+let SESSION_ID = null;
+let renderedCount = 0;
+let pollTimer = null;
+let seconds = 0;
+
+const aiTile      = document.getElementById('ai-tile');
+const aiOrb       = document.getElementById('ai-orb');
+const aiStatusTxt = document.getElementById('ai-status-text');
+const typingInd   = document.getElementById('typing-indicator');
+const typingLabel = document.getElementById('typing-label');
+const transcriptPn = document.getElementById('transcript-panel');
+
+document.getElementById('header-role').textContent = CONFIG.job_title || 'Interview';
+document.getElementById('header-sub').textContent  = `${CONFIG.difficulty || 'Medium'} · ${CONFIG.q_count || 8} questions`;
+document.getElementById('q-total').textContent = CONFIG.q_count || '—';
+
+function fmt(s){ return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`; }
+setInterval(()=>{ seconds++; document.getElementById('timer').textContent = fmt(seconds); }, 1000);
+
+function addMsg(item) {
+  const div = document.createElement('div');
+  div.className = `msg msg-${item.role}`;
+  const safe = item.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  let inner = `<div class="msg-sender">${item.role==='ai'?'AI Interviewer':'You'}</div><div class="msg-text">${safe}</div>`;
+  if (item.score !== null && item.score !== undefined && item.feedback) {
+    inner += `<div class="msg-feedback"><span class="score-chip">${item.score}/10</span>${item.feedback}</div>`;
+  }
+  div.innerHTML = inner;
+  transcriptPn.insertBefore(div, typingInd);
+  transcriptPn.scrollTop = transcriptPn.scrollHeight;
+}
+
+function applyStatus(state) {
+  const speaking  = state.status === 'speaking';
+  const listening = state.status === 'listening';
+  const thinking  = state.status === 'thinking';
+
+  aiOrb.classList.toggle('active', speaking);
+  aiTile.classList.toggle('speaking', speaking || thinking);
+  aiTile.classList.toggle('ai-speaking', speaking);
+  typingInd.style.display = thinking ? 'flex' : 'none';
+
+  aiStatusTxt.textContent =
+    speaking  ? 'Speaking…' :
+    thinking  ? 'Thinking…' :
+    listening ? 'Listening…' :
+    state.status === 'finished' ? 'Interview complete' :
+    state.status === 'stopped'  ? 'Stopped' :
+    state.status === 'error'    ? 'Error' : 'Starting…';
+
+  typingLabel.textContent = listening ? 'Listening for your answer…' : 'AI is thinking…';
+
+  if (state.current_question) {
+    document.getElementById('current-q-text').textContent = state.current_question;
+  }
+  if (state.question_number) {
+    document.getElementById('q-current').textContent = state.question_number;
+  }
+  if (state.total) {
+    document.getElementById('q-total').textContent = state.total;
+  }
+
+  // Append any new transcript messages
+  for (let i = renderedCount; i < state.transcript.length; i++) {
+    addMsg(state.transcript[i]);
+  }
+  renderedCount = state.transcript.length;
+
+  if (state.status === 'finished') {
+    clearInterval(pollTimer);
+    const endBtn = document.getElementById('end-btn');
+    endBtn.innerHTML = 'View Feedback';
+    endBtn.onclick = () => window.location.href = '/feedback';
+    setTimeout(() => window.location.href = '/feedback', 1500);
+  } else if (state.status === 'error') {
+    clearInterval(pollTimer);
+    alert('The interview hit an error: ' + (state.error || 'unknown error'));
+  }
+}
+
+async function pollStatus() {
+  if (!SESSION_ID) return;
+  try {
+    const res = await fetch(`/api/interview/status/${SESSION_ID}`);
+    if (!res.ok) return;
+    const state = await res.json();
+    applyStatus(state);
+  } catch (e) {
+    console.error('poll error', e);
+  }
+}
+
+async function startInterview() {
+  try {
+    const res = await fetch('/api/interview/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ job_id: JOB_ID })
+    });
+    const data = await res.json();
+    if (data.error) { alert('Could not start: ' + data.error); return; }
+
+    SESSION_ID = data.session_id;
+    document.getElementById('q-total').textContent = data.total;
+
+    pollTimer = setInterval(pollStatus, 1000);
+    pollStatus();
+  } catch (e) {
+    alert('Network error: ' + e.message);
+  }
+}
+
+document.getElementById('end-btn').addEventListener('click', () =>
+  document.getElementById('modal').classList.add('open')
+);
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+
+async function endInterview() {
+  closeModal();
+  if (SESSION_ID) {
+    try {
+      await fetch('/api/interview/stop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: SESSION_ID })
+      });
+    } catch (e) { /* ignore */ }
+  }
+  clearInterval(pollTimer);
+  window.location.href = '/feedback';
+}
+
+startInterview();
+</script>
+</body>
+</html>\
