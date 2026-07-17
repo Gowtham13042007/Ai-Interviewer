@@ -20,7 +20,7 @@
   </a>
   <div class="header-right">
     <span class="header-step-label">Step 1 of 2 — Setup</span>
-    <button class="header-save-btn">Save as template</button>
+    <button class="header-save-btn" id="header-save-btn" type="button">Save as template</button>
   </div>
 </header>
 <div class="progress-track"><div class="progress-fill"></div></div>
@@ -46,6 +46,13 @@
     </div>
   </div>
 
+  <div id="draft-banner" style="display:none;background:#F7F1E8;border:1px solid #E8D4B0;border-radius:10px;padding:12px 16px;margin-bottom:1.25rem;font-size:12.5px;color:#3A3A3A;display:flex;justify-content:space-between;align-items:center;gap:12px">
+    <span>We restored your last unsaved draft.</span>
+    <button id="discard-draft-btn" type="button" style="background:none;border:none;color:#C09355;font-weight:600;cursor:pointer;font-size:12.5px;font-family:inherit">Discard draft</button>
+  </div>
+
+  <div id="error-banner" style="display:none;background:#FDECEC;border:1px solid #F3B4B4;border-radius:10px;padding:12px 16px;margin-bottom:1.25rem;font-size:12.5px;color:#8A2222"></div>
+
   <!-- Job Details -->
   <p class="section-eyebrow">01 — Role information</p>
   <div class="card">
@@ -61,8 +68,8 @@
     <div class="card-body">
       <div class="form-grid">
         <div class="field">
-          <label for="job-title">Job title</label>
-          <input type="text" id="job-title" placeholder="e.g. Senior Frontend Engineer"/>
+          <label for="job-title">Job title <span class="hint">required</span></label>
+          <input type="text" id="job-title" placeholder="e.g. Senior Frontend Engineer" required/>
         </div>
         <div class="field">
           <label for="job-type">Employment type</label>
@@ -133,11 +140,11 @@
       <div class="field">
         <label>Interview focus</label>
         <div class="pill-group" id="focus-pills">
-          <button class="pill selected" data-val="technical">Technical</button>
-          <button class="pill" data-val="behavioral">Behavioral</button>
-          <button class="pill" data-val="system-design">System design</button>
-          <button class="pill" data-val="situational">Situational</button>
-          <button class="pill" data-val="mixed">Mixed</button>
+          <button class="pill selected" type="button" data-val="technical">Technical</button>
+          <button class="pill" type="button" data-val="behavioral">Behavioral</button>
+          <button class="pill" type="button" data-val="system-design">System design</button>
+          <button class="pill" type="button" data-val="situational">Situational</button>
+          <button class="pill" type="button" data-val="mixed">Mixed</button>
         </div>
       </div>
     </div>
@@ -188,16 +195,16 @@
       <div class="field">
         <label>Difficulty</label>
         <div class="pill-group" id="diff-pills">
-          <button class="pill" data-val="easy">Easy</button>
-          <button class="pill selected" data-val="medium">Medium</button>
-          <button class="pill" data-val="hard">Hard</button>
+          <button class="pill" type="button" data-val="easy">Easy</button>
+          <button class="pill selected" type="button" data-val="medium">Medium</button>
+          <button class="pill" type="button" data-val="hard">Hard</button>
         </div>
       </div>
 
       <div class="divider"></div>
 
       <div class="field">
-        <label>Number of questions</label>
+        <label>Number of questions <span class="hint">3–20</span></label>
         <div class="slider-row">
           <input type="range" min="3" max="20" value="8" id="q-count" step="1"/>
           <span class="slider-val" id="q-count-val">8 questions</span>
@@ -232,7 +239,7 @@
           <div class="td">Display brief guidance during the interview to help structure responses</div>
         </div>
         <label class="toggle">
-          <input type="checkbox"/>
+          <input type="checkbox" id="show-hints-toggle"/>
           <span class="t-slider"></span>
         </label>
       </div>
@@ -240,12 +247,12 @@
   </div>
 
   <div class="action-bar">
-    <span class="action-hint">All settings are saved automatically</span>
+    <span class="action-hint" id="action-hint">All settings are saved automatically</span>
     <div class="action-buttons">
-      <button class="btn btn-ghost">Save as template</button>
-      <a href="interview.html" class="btn btn-primary">
-        Begin interview <span class="arrow">→</span>
-      </a>
+      <button class="btn btn-ghost" id="save-template-btn" type="button">Save as template</button>
+      <button class="btn btn-primary" id="begin-btn" type="button">
+        <span id="begin-btn-label">Begin interview</span> <span class="arrow" id="begin-btn-arrow">→</span>
+      </button>
     </div>
   </div>
 

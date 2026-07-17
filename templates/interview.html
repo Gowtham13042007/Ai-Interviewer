@@ -25,6 +25,9 @@
   --accent-gold-pale:rgba(192,147,85,0.12);
   --danger:#E25454;
   --danger-dark:#B83C3C;
+  --warn:#E2A854;
+  --warn-dark:#C68E3C;
+  --ok:#5FC088;
   --radius:10px;--radius-sm:6px;--radius-lg:14px;
 }
 html,body{height:100%;font-size:15px;-webkit-font-smoothing:antialiased}
@@ -49,17 +52,42 @@ body{font-family:var(--font-body);background:var(--meet-bg);color:var(--meet-tex
   border:1px solid var(--meet-border);border-radius:20px;padding:5px 13px}
 .timer-dot{width:7px;height:7px;border-radius:50%;background:var(--accent-gold);
   animation:pulse-dot 2s ease-in-out infinite}
+.timer-dot.paused{background:var(--warn);animation:none}
 @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}
 .timer-text{font-size:13px;font-weight:600;color:var(--meet-text);font-variant-numeric:tabular-nums;letter-spacing:.05em}
 .q-badge{background:var(--meet-surface);border:1px solid var(--meet-border);border-radius:20px;
   padding:5px 13px;font-size:12px;color:var(--meet-text-2);letter-spacing:.01em}
 .q-badge span{color:var(--accent-gold);font-weight:600}
 .header-right{display:flex;align-items:center;gap:10px}
+.btn-pause{display:flex;align-items:center;gap:7px;background:var(--meet-surface);color:var(--meet-text);
+  border:1px solid var(--meet-border-2);border-radius:6px;padding:8px 16px;font-size:13px;font-weight:500;
+  font-family:var(--font-body);cursor:pointer;transition:all var(--transition);letter-spacing:.01em}
+.btn-pause:hover{background:var(--meet-surface-2)}
+.btn-pause.is-paused{background:var(--warn);color:#1a1a1a;border-color:var(--warn)}
+.btn-pause svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
 .btn-end{display:flex;align-items:center;gap:7px;background:var(--danger);color:#fff;border:none;
   border-radius:6px;padding:8px 16px;font-size:13px;font-weight:500;font-family:var(--font-body);
   cursor:pointer;transition:background var(--transition),transform var(--transition);letter-spacing:.01em}
 .btn-end:hover{background:var(--danger-dark)}.btn-end:active{transform:scale(.97)}
 .btn-end svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round}
+
+.conn-banner{display:none;align-items:center;justify-content:center;gap:10px;background:var(--danger);
+  color:#fff;font-size:12.5px;font-weight:500;padding:8px;flex-shrink:0}
+.conn-banner.show{display:flex}
+.conn-banner button{background:rgba(255,255,255,0.2);border:none;color:#fff;padding:4px 10px;
+  border-radius:5px;font-size:12px;cursor:pointer;font-family:var(--font-body)}
+.conn-banner button:hover{background:rgba(255,255,255,0.3)}
+
+.pause-overlay{position:fixed;inset:0;background:rgba(20,20,18,.72);display:flex;align-items:center;
+  justify-content:center;z-index:150;opacity:0;pointer-events:none;transition:opacity .2s ease;
+  backdrop-filter:blur(3px)}
+.pause-overlay.show{opacity:1;pointer-events:all}
+.pause-card{background:var(--meet-surface);border:1px solid var(--meet-border-2);border-radius:var(--radius-lg);
+  padding:2rem 2.5rem;text-align:center}
+.pause-card h2{font-family:var(--font-display);font-size:22px;font-weight:400;color:var(--warn);margin-bottom:8px}
+.pause-card p{font-size:13px;color:var(--meet-text-2);margin-bottom:1.25rem}
+.pause-card button{background:var(--accent-gold);color:#1a1a1a;border:none;border-radius:6px;
+  padding:10px 24px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:var(--font-body)}
 
 .meet-layout{flex:1;display:flex;overflow:hidden}
 .stage{flex:1;display:flex;align-items:center;justify-content:center;padding:14px;min-width:0}
@@ -91,7 +119,8 @@ body{font-family:var(--font-body);background:var(--meet-bg);color:var(--meet-tex
 .panel{width:360px;flex-shrink:0;background:var(--meet-surface);border-left:1px solid var(--meet-border);
   display:flex;flex-direction:column;overflow:hidden}
 .panel-title{padding:14px;font-size:12.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
-  color:var(--meet-text-2);border-bottom:1px solid var(--meet-border)}
+  color:var(--meet-text-2);border-bottom:1px solid var(--meet-border);display:flex;justify-content:space-between;align-items:center}
+.panel-title .progress-mini{font-size:11px;color:var(--accent-gold);font-weight:600;letter-spacing:0}
 .panel-content{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;
   scrollbar-width:thin;scrollbar-color:var(--meet-border) transparent}
 .panel-content::-webkit-scrollbar{width:4px}
@@ -125,7 +154,8 @@ body{font-family:var(--font-body);background:var(--meet-bg);color:var(--meet-tex
 .typing-label{font-size:12px;color:var(--meet-text-2)}
 
 .footer-status{height:56px;background:var(--meet-bg);border-top:1px solid var(--meet-border);
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12.5px;color:var(--meet-text-2)}
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12.5px;color:var(--meet-text-2);gap:8px}
+.footer-status .dot-ok{width:6px;height:6px;border-radius:50%;background:var(--ok)}
 
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;
   align-items:center;justify-content:center;z-index:200;
@@ -145,7 +175,7 @@ body{font-family:var(--font-body);background:var(--meet-bg);color:var(--meet-tex
 .modal-btn-end:hover{background:var(--danger-dark)}
 
 @media(max-width:800px){.panel{display:none}}
-@media(max-width:500px){.session-meta{display:none}.header-divider{display:none}}
+@media(max-width:500px){.session-meta{display:none}.header-divider{display:none}.btn-pause span.label{display:none}}
 </style>
 </head>
 <body>
@@ -164,18 +194,27 @@ body{font-family:var(--font-body);background:var(--meet-bg);color:var(--meet-tex
   </div>
   <div class="header-center">
     <div class="timer-wrap">
-      <div class="timer-dot"></div>
+      <div class="timer-dot" id="timer-dot"></div>
       <span class="timer-text" id="timer">00:00</span>
     </div>
     <div class="q-badge">Question <span id="q-current">—</span> of <span id="q-total">—</span></div>
   </div>
   <div class="header-right">
+    <button class="btn-pause" id="pause-btn">
+      <svg id="pause-icon" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+      <span class="label" id="pause-label">Pause</span>
+    </button>
     <button class="btn-end" id="end-btn">
       <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
       End interview
     </button>
   </div>
 </header>
+
+<div class="conn-banner" id="conn-banner">
+  <span id="conn-banner-text">Connection lost — retrying…</span>
+  <button id="conn-retry-btn">Retry now</button>
+</div>
 
 <div class="meet-layout">
   <div class="stage">
@@ -198,7 +237,10 @@ body{font-family:var(--font-body);background:var(--meet-bg);color:var(--meet-tex
   </div>
 
   <div class="panel">
-    <div class="panel-title">Transcript</div>
+    <div class="panel-title">
+      <span>Transcript</span>
+      <span class="progress-mini" id="progress-mini">0%</span>
+    </div>
     <div class="panel-content" id="transcript-panel">
       <div class="q-card">
         <div class="q-card-eyebrow">Current question</div>
@@ -213,7 +255,16 @@ body{font-family:var(--font-body);background:var(--meet-bg);color:var(--meet-tex
 </div>
 
 <div class="footer-status">
-  All speaking &amp; listening happens through the server's mic/speakers — this page just shows what's happening.
+  <span class="dot-ok" id="footer-dot"></span>
+  <span id="footer-text">All speaking &amp; listening happens through the server's mic/speakers — this page just shows what's happening.</span>
+</div>
+
+<div class="pause-overlay" id="pause-overlay">
+  <div class="pause-card">
+    <h2>Interview paused</h2>
+    <p>Take your time. The interviewer will wait for you to resume.</p>
+    <button id="resume-btn">Resume interview</button>
+  </div>
 </div>
 
 <div class="modal-overlay" id="modal">
@@ -237,20 +288,47 @@ let SESSION_ID = null;
 let renderedCount = 0;
 let pollTimer = null;
 let seconds = 0;
+let isPaused = false;
+let consecutivePollFailures = 0;
+const MAX_POLL_FAILURES_BEFORE_BANNER = 2;
+const POLL_INTERVAL_MS = 1000;
 
-const aiTile      = document.getElementById('ai-tile');
-const aiOrb       = document.getElementById('ai-orb');
-const aiStatusTxt = document.getElementById('ai-status-text');
-const typingInd   = document.getElementById('typing-indicator');
-const typingLabel = document.getElementById('typing-label');
-const transcriptPn = document.getElementById('transcript-panel');
+// Cache all DOM lookups once instead of re-querying on every poll tick.
+const el = {
+  headerRole: document.getElementById('header-role'),
+  headerSub: document.getElementById('header-sub'),
+  qTotal: document.getElementById('q-total'),
+  qCurrent: document.getElementById('q-current'),
+  timer: document.getElementById('timer'),
+  timerDot: document.getElementById('timer-dot'),
+  aiTile: document.getElementById('ai-tile'),
+  aiOrb: document.getElementById('ai-orb'),
+  aiStatusTxt: document.getElementById('ai-status-text'),
+  typingInd: document.getElementById('typing-indicator'),
+  typingLabel: document.getElementById('typing-label'),
+  transcriptPn: document.getElementById('transcript-panel'),
+  currentQText: document.getElementById('current-q-text'),
+  progressMini: document.getElementById('progress-mini'),
+  connBanner: document.getElementById('conn-banner'),
+  connBannerText: document.getElementById('conn-banner-text'),
+  connRetryBtn: document.getElementById('conn-retry-btn'),
+  pauseBtn: document.getElementById('pause-btn'),
+  pauseLabel: document.getElementById('pause-label'),
+  pauseOverlay: document.getElementById('pause-overlay'),
+  resumeBtn: document.getElementById('resume-btn'),
+  endBtn: document.getElementById('end-btn'),
+  footerText: document.getElementById('footer-text'),
+  footerDot: document.getElementById('footer-dot'),
+};
 
-document.getElementById('header-role').textContent = CONFIG.job_title || 'Interview';
-document.getElementById('header-sub').textContent  = `${CONFIG.difficulty || 'Medium'} · ${CONFIG.q_count || 8} questions`;
-document.getElementById('q-total').textContent = CONFIG.q_count || '—';
+el.headerRole.textContent = CONFIG.job_title || 'Interview';
+el.headerSub.textContent  = `${CONFIG.difficulty || 'Medium'} · ${CONFIG.q_count || 8} questions`;
+el.qTotal.textContent = CONFIG.q_count || '—';
 
 function fmt(s){ return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`; }
-setInterval(()=>{ seconds++; document.getElementById('timer').textContent = fmt(seconds); }, 1000);
+setInterval(()=>{
+  if (!isPaused) { seconds++; el.timer.textContent = fmt(seconds); }
+}, 1000);
 
 function addMsg(item) {
   const div = document.createElement('div');
@@ -261,8 +339,8 @@ function addMsg(item) {
     inner += `<div class="msg-feedback"><span class="score-chip">${item.score}/10</span>${item.feedback}</div>`;
   }
   div.innerHTML = inner;
-  transcriptPn.insertBefore(div, typingInd);
-  transcriptPn.scrollTop = transcriptPn.scrollHeight;
+  el.transcriptPn.insertBefore(div, el.typingInd);
+  el.transcriptPn.scrollTop = el.transcriptPn.scrollHeight;
 }
 
 function applyStatus(state) {
@@ -270,12 +348,19 @@ function applyStatus(state) {
   const listening = state.status === 'listening';
   const thinking  = state.status === 'thinking';
 
-  aiOrb.classList.toggle('active', speaking);
-  aiTile.classList.toggle('speaking', speaking || thinking);
-  aiTile.classList.toggle('ai-speaking', speaking);
-  typingInd.style.display = thinking ? 'flex' : 'none';
+  isPaused = !!state.paused;
+  el.pauseBtn.classList.toggle('is-paused', isPaused || !!state.pause_requested);
+  el.pauseLabel.textContent = (isPaused || state.pause_requested) ? 'Resume' : 'Pause';
+  el.timerDot.classList.toggle('paused', isPaused);
+  el.pauseOverlay.classList.toggle('show', isPaused);
 
-  aiStatusTxt.textContent =
+  el.aiOrb.classList.toggle('active', speaking);
+  el.aiTile.classList.toggle('speaking', speaking || thinking);
+  el.aiTile.classList.toggle('ai-speaking', speaking);
+  el.typingInd.style.display = thinking ? 'flex' : 'none';
+
+  el.aiStatusTxt.textContent =
+    isPaused ? 'Paused' :
     speaking  ? 'Speaking…' :
     thinking  ? 'Thinking…' :
     listening ? 'Listening…' :
@@ -283,16 +368,18 @@ function applyStatus(state) {
     state.status === 'stopped'  ? 'Stopped' :
     state.status === 'error'    ? 'Error' : 'Starting…';
 
-  typingLabel.textContent = listening ? 'Listening for your answer…' : 'AI is thinking…';
+  el.typingLabel.textContent = listening ? 'Listening for your answer…' : 'AI is thinking…';
 
   if (state.current_question) {
-    document.getElementById('current-q-text').textContent = state.current_question;
+    el.currentQText.textContent = state.current_question;
   }
   if (state.question_number) {
-    document.getElementById('q-current').textContent = state.question_number;
+    el.qCurrent.textContent = state.question_number;
   }
   if (state.total) {
-    document.getElementById('q-total').textContent = state.total;
+    el.qTotal.textContent = state.total;
+    const pct = Math.round((state.question_number / state.total) * 100);
+    el.progressMini.textContent = `${isFinite(pct) ? pct : 0}%`;
   }
 
   // Append any new transcript messages
@@ -303,27 +390,50 @@ function applyStatus(state) {
 
   if (state.status === 'finished') {
     clearInterval(pollTimer);
-    const endBtn = document.getElementById('end-btn');
-    endBtn.innerHTML = 'View Feedback';
-    endBtn.onclick = () => window.location.href = '/feedback';
+    el.endBtn.innerHTML = 'View Feedback';
+    el.endBtn.onclick = () => window.location.href = '/feedback';
+    el.pauseBtn.style.display = 'none';
+    el.footerText.textContent = 'Interview complete — redirecting to your feedback report…';
     setTimeout(() => window.location.href = '/feedback', 1500);
   } else if (state.status === 'error') {
     clearInterval(pollTimer);
-    alert('The interview hit an error: ' + (state.error || 'unknown error'));
+    el.footerDot.style.background = 'var(--danger)';
+    el.footerText.textContent = 'The interview hit an error: ' + (state.error || 'unknown error');
   }
+}
+
+function showConnBanner(message) {
+  el.connBannerText.textContent = message;
+  el.connBanner.classList.add('show');
+  el.footerDot.style.background = 'var(--warn)';
+}
+function hideConnBanner() {
+  el.connBanner.classList.remove('show');
+  el.footerDot.style.background = 'var(--ok)';
 }
 
 async function pollStatus() {
   if (!SESSION_ID) return;
   try {
     const res = await fetch(`/api/interview/status/${SESSION_ID}`);
-    if (!res.ok) return;
+    if (!res.ok) throw new Error(`status ${res.status}`);
     const state = await res.json();
+    consecutivePollFailures = 0;
+    hideConnBanner();
     applyStatus(state);
   } catch (e) {
+    consecutivePollFailures++;
     console.error('poll error', e);
+    if (consecutivePollFailures >= MAX_POLL_FAILURES_BEFORE_BANNER) {
+      showConnBanner('Connection lost — retrying…');
+    }
   }
 }
+
+el.connRetryBtn.addEventListener('click', () => {
+  consecutivePollFailures = 0;
+  pollStatus();
+});
 
 async function startInterview() {
   try {
@@ -333,19 +443,45 @@ async function startInterview() {
       body: JSON.stringify({ job_id: JOB_ID })
     });
     const data = await res.json();
-    if (data.error) { alert('Could not start: ' + data.error); return; }
+    if (data.error) {
+      showConnBanner(data.error);
+      el.footerText.textContent = 'Could not start: ' + data.error;
+      return;
+    }
 
     SESSION_ID = data.session_id;
-    document.getElementById('q-total').textContent = data.total;
+    el.qTotal.textContent = data.total;
 
-    pollTimer = setInterval(pollStatus, 1000);
+    pollTimer = setInterval(pollStatus, POLL_INTERVAL_MS);
     pollStatus();
   } catch (e) {
-    alert('Network error: ' + e.message);
+    showConnBanner('Could not reach the server. Retrying…');
+    setTimeout(startInterview, 2000);
   }
 }
 
-document.getElementById('end-btn').addEventListener('click', () =>
+// ── Pause / Resume ──
+el.pauseBtn.addEventListener('click', async () => {
+  if (!SESSION_ID) return;
+  const endpoint = (isPaused) ? '/api/interview/resume' : '/api/interview/pause';
+  el.pauseBtn.disabled = true;
+  try {
+    await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: SESSION_ID })
+    });
+    pollStatus();
+  } catch (e) {
+    showConnBanner('Could not update pause state — retrying…');
+  } finally {
+    el.pauseBtn.disabled = false;
+  }
+});
+el.resumeBtn.addEventListener('click', () => el.pauseBtn.click());
+
+// ── End interview modal ──
+el.endBtn.addEventListener('click', () =>
   document.getElementById('modal').classList.add('open')
 );
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
@@ -368,7 +504,15 @@ async function endInterview() {
   window.location.href = '/feedback';
 }
 
+// Warn on accidental tab close mid-interview
+window.addEventListener('beforeunload', (e) => {
+  if (SESSION_ID && !document.hidden) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
 startInterview();
 </script>
 </body>
-</html>\
+</html>

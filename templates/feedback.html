@@ -9,7 +9,8 @@
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Inter',sans-serif; background:#0f0f13; color:#e2e8f0; min-height:100vh; padding:40px 20px; }
   .container { max-width:800px; margin:0 auto; }
-  h1 { font-size:28px; font-weight:600; margin-bottom:8px; }
+  .top-row { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:8px; }
+  h1 { font-size:28px; font-weight:600; }
   .sub { color:#94a3b8; margin-bottom:32px; }
   .card { background:#1a1a2e; border:1px solid #2d2d44; border-radius:16px; padding:24px; margin-bottom:20px; }
   .score-big { font-size:64px; font-weight:700; color:#6366f1; }
@@ -22,14 +23,21 @@
   ul li { padding:8px 0; border-bottom:1px solid #2d2d44; font-size:14px; color:#cbd5e1; }
   ul li:last-child { border:none; }
   ul li::before { content:'→ '; color:#6366f1; }
+  .empty-note { font-size:13px; color:#64748b; font-style:italic; }
   .q-row { display:flex; justify-content:space-between; align-items:flex-start; padding:10px 0; border-bottom:1px solid #2d2d44; gap:16px; }
   .q-row:last-child { border:none; }
   .q-text { font-size:13px; color:#cbd5e1; flex:1; }
   .q-score { font-size:20px; font-weight:700; color:#6366f1; min-width:32px; text-align:right; }
   .q-comment { font-size:12px; color:#64748b; margin-top:4px; }
-  .btn { display:inline-block; padding:12px 28px; background:#6366f1; color:#fff; border-radius:10px; text-decoration:none; font-weight:600; margin-top:24px; cursor:pointer; border:none; font-size:15px; }
+  .btn { display:inline-block; padding:12px 28px; background:#6366f1; color:#fff; border-radius:10px; text-decoration:none; font-weight:600; margin-top:24px; cursor:pointer; border:none; font-size:15px; font-family:'Inter',sans-serif; }
+  .btn-secondary { background:transparent; border:1px solid #2d2d44; color:#e2e8f0; padding:9px 16px; border-radius:8px; font-size:13px; cursor:pointer; font-family:'Inter',sans-serif; }
+  .btn-secondary:hover { background:#1a1a2e; }
+  .btn-row { display:flex; gap:10px; flex-wrap:wrap; }
   .loading { text-align:center; padding:60px; color:#64748b; }
+  .error-box { text-align:center; padding:60px 20px; color:#fca5a5; }
+  .error-box .btn { background:#ef4444; }
   h2 { font-size:18px; font-weight:600; margin-bottom:16px; }
+  .fallback-note { font-size:12px; color:#f59e0b; background:#f59e0b14; border:1px solid #f59e0b33; border-radius:8px; padding:10px 14px; margin-bottom:20px; }
 </style>
 </head>
 <body>
@@ -38,9 +46,28 @@
     <div style="font-size:40px;margin-bottom:16px">⏳</div>
     Generating your feedback report…
   </div>
+
+  <div id="error-state" class="error-box" style="display:none">
+    <div style="font-size:40px;margin-bottom:16px">⚠️</div>
+    <p id="error-msg">Could not load feedback. Please try again.</p>
+    <button class="btn" id="retry-btn">Retry</button>
+  </div>
+
   <div id="content" style="display:none">
-    <h1>Interview Feedback</h1>
-    <p class="sub">Here's how you did</p>
+    <div class="top-row">
+      <div>
+        <h1>Interview Feedback</h1>
+        <p class="sub">Here's how you did</p>
+      </div>
+      <div class="btn-row">
+        <button class="btn-secondary" id="print-btn">🖨️ Print</button>
+        <button class="btn-secondary" id="download-btn">⬇ Download report</button>
+      </div>
+    </div>
+
+    <div id="fallback-note" class="fallback-note" style="display:none">
+      This report was generated from your per-question scores because the full AI summary could not be produced this time.
+    </div>
 
     <div class="card" style="display:flex;gap:40px;align-items:center">
       <div>
@@ -76,38 +103,116 @@
 </div>
 
 <script>
+let lastData = null;
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderList(container, items, emptyMessage) {
+  if (!items || items.length === 0) {
+    container.innerHTML = `<li class="empty-note" style="border:none">${emptyMessage}</li>`;
+    return;
+  }
+  // Build the full HTML string once and write it in a single operation,
+  // instead of repeated += (which forces a full re-parse each iteration).
+  container.innerHTML = items.map(s => `<li>${escapeHtml(s)}</li>`).join('');
+}
+
+function renderQuestionScores(container, questionScores) {
+  if (!questionScores || questionScores.length === 0) {
+    container.innerHTML = `<p class="empty-note">No per-question scores available.</p>`;
+    return;
+  }
+  const html = questionScores.map(q => `
+    <div class="q-row">
+      <div class="q-text">${escapeHtml(q.question)}<div class="q-comment">${escapeHtml(q.comment)}</div></div>
+      <div class="q-score">${escapeHtml(q.score)}</div>
+    </div>`).join('');
+  container.innerHTML = html;
+}
+
+function renderFeedback(data) {
+  lastData = data;
+
+  document.getElementById('overall-score').textContent = data.overall_score;
+  document.getElementById('summary').textContent = data.summary || '';
+
+  const recEl = document.getElementById('recommendation');
+  const recClass = data.recommendation === 'Hire' ? 'rec-hire' : data.recommendation === 'Maybe' ? 'rec-maybe' : 'rec-no';
+  recEl.innerHTML = `<span class="recommendation ${recClass}">${escapeHtml(data.recommendation)}</span>`;
+
+  renderList(document.getElementById('strengths'), data.strengths, 'No specific strengths were called out.');
+  renderList(document.getElementById('improvements'), data.improvements, 'No specific improvement areas were called out.');
+  renderQuestionScores(document.getElementById('q-scores'), data.question_scores);
+
+  document.getElementById('fallback-note').style.display = data.is_fallback ? 'block' : 'none';
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('error-state').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+}
+
+function showError(message) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('error-msg').textContent = message;
+  document.getElementById('error-state').style.display = 'block';
+}
+
 async function loadFeedback() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('error-state').style.display = 'none';
+  document.getElementById('content').style.display = 'none';
   try {
     const res = await fetch('/api/get-feedback');
     const data = await res.json();
-
-    document.getElementById('overall-score').textContent = data.overall_score;
-    document.getElementById('summary').textContent = data.summary;
-
-    const recEl = document.getElementById('recommendation');
-    const recClass = data.recommendation === 'Hire' ? 'rec-hire' : data.recommendation === 'Maybe' ? 'rec-maybe' : 'rec-no';
-    recEl.innerHTML = `<span class="recommendation ${recClass}">${data.recommendation}</span>`;
-
-    const strEl = document.getElementById('strengths');
-    data.strengths.forEach(s => { const li = document.createElement('li'); li.textContent = s; strEl.appendChild(li); });
-
-    const impEl = document.getElementById('improvements');
-    data.improvements.forEach(s => { const li = document.createElement('li'); li.textContent = s; impEl.appendChild(li); });
-
-    const qEl = document.getElementById('q-scores');
-    (data.question_scores || []).forEach(q => {
-      qEl.innerHTML += `<div class="q-row">
-        <div class="q-text">${q.question}<div class="q-comment">${q.comment}</div></div>
-        <div class="q-score">${q.score}</div>
-      </div>`;
-    });
-
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('content').style.display = 'block';
-  } catch(e) {
-    document.getElementById('loading').innerHTML = '❌ Could not load feedback. Please try again.';
+    if (!res.ok || data.error) {
+      showError(data.error || 'Could not load feedback. Please try again.');
+      return;
+    }
+    renderFeedback(data);
+  } catch (e) {
+    showError('Network error while loading feedback. Please try again.');
   }
 }
+
+document.getElementById('retry-btn').addEventListener('click', loadFeedback);
+document.getElementById('print-btn').addEventListener('click', () => window.print());
+
+document.getElementById('download-btn').addEventListener('click', () => {
+  if (!lastData) return;
+  const lines = [];
+  lines.push('INTERVIEW FEEDBACK REPORT');
+  lines.push('='.repeat(40));
+  lines.push(`Overall score: ${lastData.overall_score}/10`);
+  lines.push(`Recommendation: ${lastData.recommendation}`);
+  lines.push('');
+  lines.push('Summary:');
+  lines.push(lastData.summary || '—');
+  lines.push('');
+  lines.push('Strengths:');
+  (lastData.strengths || []).forEach(s => lines.push(`  - ${s}`));
+  lines.push('');
+  lines.push('Areas to improve:');
+  (lastData.improvements || []).forEach(s => lines.push(`  - ${s}`));
+  lines.push('');
+  lines.push('Question-by-question:');
+  (lastData.question_scores || []).forEach((q, i) => {
+    lines.push(`  Q${i + 1}. ${q.question}`);
+    lines.push(`      Score: ${q.score}/10 — ${q.comment}`);
+  });
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'interview-feedback-report.txt';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
 
 loadFeedback();
 </script>

@@ -2,6 +2,8 @@ from __future__ import annotations
 import os
 import re
 import json
+import time
+import logging
 import threading
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
@@ -10,21 +12,58 @@ from langchain_core.messages import SystemMessage, HumanMessage
 
 
 load_dotenv()
+log = logging.getLogger("interviewai.ai")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
     raise ValueError("Please set OPENAI_API_KEY in your .env file.")
 
+MODEL_NAME = os.getenv("INTERVIEWAI_MODEL", "gpt-4o-mini")
+LLM_MAX_RETRIES = 2
+
 QUESTIONS_STORE: dict[str, dict] = {}
 SESSIONS: dict[str, "InterviewSession"] = {}
 
+# Compiled once instead of on every call — a real cost when this fires
+# for every question batch, every answer score, and every feedback report.
+_FENCE_RE = re.compile(r"```(?:json)?")
+
+# One ChatOpenAI client per temperature, reused across calls instead of
+# re-instantiating (and re-establishing an HTTP connection pool) each time.
+_LLM_CACHE: dict[float, ChatOpenAI] = {}
+_LLM_CACHE_LOCK = threading.Lock()
+
 
 def _make_llm(temperature: float = 0.7) -> ChatOpenAI:
-    return ChatOpenAI(
-        model="gpt-4o-mini",
-        temperature=temperature,
-        api_key=OPENAI_API_KEY,
-    )
+    with _LLM_CACHE_LOCK:
+        llm = _LLM_CACHE.get(temperature)
+        if llm is None:
+            llm = ChatOpenAI(model=MODEL_NAME, temperature=temperature, api_key=OPENAI_API_KEY)
+            _LLM_CACHE[temperature] = llm
+        return llm
+
+
+def _strip_fences(raw: str) -> str:
+    return _FENCE_RE.sub("", raw).strip().rstrip("`").strip()
+
+
+def _invoke_with_retry(llm: ChatOpenAI, messages: list, max_retries: int = LLM_MAX_RETRIES):
+    """Simple exponential backoff around llm.invoke — network hiccups and
+    transient 429/5xx from the API shouldn't kill a whole interview."""
+    last_exc = None
+    for attempt in range(max_retries + 1):
+        try:
+            return llm.invoke(messages)
+        except Exception as exc:
+            last_exc = exc
+            if attempt < max_retries:
+                wait = 0.6 * (2 ** attempt)
+                log.warning("LLM call failed (attempt %d/%d): %s — retrying in %.1fs",
+                            attempt + 1, max_retries + 1, exc, wait)
+                time.sleep(wait)
+            else:
+                log.error("LLM call failed after %d attempts: %s", max_retries + 1, exc)
+    raise last_exc
 
 
 _QUESTION_SYSTEM = """You are an expert technical interviewer and HR specialist.
@@ -67,7 +106,7 @@ Example format (truncated):
 
 
 def _parse_questions(raw: str) -> list[dict]:
-    cleaned = re.sub(r"```(?:json)?", "", raw).strip().rstrip("`").strip()
+    cleaned = _strip_fences(raw)
     start = cleaned.find("[")
     end = cleaned.rfind("]")
     if start == -1 or end == -1:
@@ -93,47 +132,70 @@ def generate_questions_task(job_id: str, config: dict) -> None:
             "parsed": parsed,
             "total": len(parsed),
         }
-        print(f"✅ Questions ready for job_id={job_id} ({len(parsed)} total, all custom)")
+        log.info("Questions ready for job_id=%s (%d total, all custom)", job_id, len(parsed))
+        return
+
+    prompt = _QUESTION_USER_TMPL.format(
+        n=ai_count,
+        job_title=config.get("job_title", "Not specified"),
+        job_type=config.get("job_type", "Not specified"),
+        industry=config.get("industry", "Not specified"),
+        experience=config.get("experience", "Not specified"),
+        jd=(config.get("jd") or "Not provided")[:800],
+        skills=", ".join(config.get("skills", [])) or "Not specified",
+        focus=config.get("focus", "mixed"),
+        difficulty=config.get("difficulty", "medium"),
+        tone=config.get("tone", "Professional"),
+        language=config.get("language", "English"),
+    )
+
+    messages = [
+        SystemMessage(content=_QUESTION_SYSTEM),
+        HumanMessage(content=prompt),
+    ]
+
+    # Up to 2 attempts total: if the model returns malformed JSON, ask again
+    # once with a stricter reminder before giving up.
+    parse_attempts = 2
+    parsed = None
+    last_err = None
+
+    for attempt in range(parse_attempts):
+        try:
+            llm = _make_llm(temperature=0.8 if attempt == 0 else 0.4)
+            attempt_messages = messages
+            if attempt > 0:
+                attempt_messages = messages + [
+                    HumanMessage(content="Your previous response was not valid JSON. "
+                                          "Respond with ONLY the JSON array, nothing else.")
+                ]
+            response = _invoke_with_retry(llm, attempt_messages)
+            parsed = _parse_questions(response.content)
+            break
+        except Exception as exc:
+            last_err = exc
+            log.warning("Question parse attempt %d failed for job_id=%s: %s", attempt + 1, job_id, exc)
+
+    if parsed is None:
+        QUESTIONS_STORE[job_id] = {"status": "failed", "error": str(last_err)}
+        log.error("Question generation failed for job_id=%s: %s", job_id, last_err)
         return
 
     try:
-        llm = _make_llm(temperature=0.8)
-        prompt = _QUESTION_USER_TMPL.format(
-            n=ai_count,
-            job_title=config.get("job_title", "Not specified"),
-            job_type=config.get("job_type", "Not specified"),
-            industry=config.get("industry", "Not specified"),
-            experience=config.get("experience", "Not specified"),
-            jd=(config.get("jd") or "Not provided")[:800],
-            skills=", ".join(config.get("skills", [])) or "Not specified",
-            focus=config.get("focus", "mixed"),
-            difficulty=config.get("difficulty", "medium"),
-            tone=config.get("tone", "Professional"),
-            language=config.get("language", "English"),
-        )
-
-        messages = [
-            SystemMessage(content=_QUESTION_SYSTEM),
-            HumanMessage(content=prompt),
-        ]
-
-        response = llm.invoke(messages)
-        parsed = _parse_questions(response.content)
         for cq in custom_questions:
             if cq.strip():
                 parsed.append({"question": cq.strip(), "hint": "", "type": "custom"})
 
         QUESTIONS_STORE[job_id] = {
             "status": "completed",
-            "questions": response.content,
+            "questions": None,
             "parsed": parsed,
             "total": len(parsed),
         }
-
-        print(f"✅ Questions ready for job_id={job_id} ({len(parsed)} total)")
+        log.info("Questions ready for job_id=%s (%d total)", job_id, len(parsed))
     except Exception as exc:
         QUESTIONS_STORE[job_id] = {"status": "failed", "error": str(exc)}
-        print(f"❌ Question generation failed for job_id={job_id}: {exc}")
+        log.error("Question generation failed for job_id=%s: %s", job_id, exc)
 
 
 _INTERVIEWER_SYSTEM_TMPL = """You are a {tone} AI interviewer conducting a {difficulty}-level interview
@@ -172,6 +234,7 @@ class InterviewSession:
         self.llm = _make_llm(temperature=0.7)
         self._score_llm = _make_llm(temperature=0.0)
         self._lock = threading.Lock()
+        self.started_at = time.time()
         self._system_prompt = _INTERVIEWER_SYSTEM_TMPL.format(
             tone=config.get("tone", "Professional"),
             difficulty=config.get("difficulty", "medium"),
@@ -273,10 +336,13 @@ class InterviewSession:
                 "finished": False,
             }
 
+    def elapsed_seconds(self) -> float:
+        return time.time() - self.started_at
+
     def _invoke(self, user_prompt: str) -> str:
         history_msgs = self.memory.messages
         messages = [SystemMessage(content=self._system_prompt)] + history_msgs + [HumanMessage(content=user_prompt)]
-        response = self.llm.invoke(messages)
+        response = _invoke_with_retry(self.llm, messages)
         return response.content.strip()
 
     def _score_answer(self, question: str, answer: str, hint: str) -> tuple[int, str]:
@@ -290,14 +356,14 @@ class InterviewSession:
             HumanMessage(content=prompt),
         ]
         try:
-            raw = self._score_llm.invoke(messages).content.strip()
-            raw = re.sub(r"```(?:json)?", "", raw).strip().rstrip("`").strip()
+            raw = _invoke_with_retry(self._score_llm, messages, max_retries=1).content.strip()
+            raw = _strip_fences(raw)
             data = json.loads(raw)
             score = int(data.get("score", 5))
             score = max(1, min(10, score))
             return score, str(data.get("feedback", ""))
         except Exception as exc:
-            print(f"⚠️ Scoring failed: {exc}")
+            log.warning("Scoring failed: %s", exc)
             return 5, "Could not evaluate this answer."
 
 
@@ -327,6 +393,28 @@ Return a JSON object with EXACTLY these keys:
     }}
   ]
 }}"""
+
+
+def _fallback_feedback(session: "InterviewSession", error: str) -> dict:
+    """If the LLM report generation fails outright, fall back to a report
+    built from the per-question scores we already have, instead of a hard
+    500 that strands the candidate with nothing."""
+    scores = [item["score"] for item in session.history]
+    avg = round(sum(scores) / len(scores), 1) if scores else 0
+    recommendation = "Hire" if avg >= 7 else "Maybe" if avg >= 4.5 else "No Hire"
+    return {
+        "overall_score": avg,
+        "recommendation": recommendation,
+        "summary": f"Automated report unavailable ({error}). This is a fallback summary computed "
+                   f"from per-question scores.",
+        "strengths": [],
+        "improvements": [],
+        "question_scores": [
+            {"question": item["question"], "score": item["score"], "comment": item["feedback"]}
+            for item in session.history
+        ],
+        "is_fallback": True,
+    }
 
 
 def generate_feedback(session: InterviewSession) -> dict:
@@ -359,12 +447,16 @@ def generate_feedback(session: InterviewSession) -> dict:
         HumanMessage(content=prompt),
     ]
 
-    response = llm.invoke(messages)
-    raw = re.sub(r"```(?:json)?", "", response.content).strip().rstrip("`").strip()
+    try:
+        response = _invoke_with_retry(llm, messages)
+        raw = _strip_fences(response.content)
 
-    start = raw.find("{")
-    end = raw.rfind("}")
-    if start == -1 or end == -1:
-        raise ValueError("Feedback LLM did not return valid JSON.")
+        start = raw.find("{")
+        end = raw.rfind("}")
+        if start == -1 or end == -1:
+            raise ValueError("Feedback LLM did not return valid JSON.")
 
-    return json.loads(raw[start: end + 1])
+        return json.loads(raw[start: end + 1])
+    except Exception as exc:
+        log.error("Feedback generation failed, using fallback: %s", exc)
+        return _fallback_feedback(session, str(exc))
